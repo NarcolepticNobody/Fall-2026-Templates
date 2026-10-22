@@ -1,5 +1,6 @@
 using UnityEngine;
 using LevelDesign.Gameplay.Levels;
+using LevelDesign.Data;
 
 namespace LevelDesign.Systems.Player
 {
@@ -8,14 +9,19 @@ namespace LevelDesign.Systems.Player
         [Header("State Machine")]
         [SerializeField] private PlayerStateMachine PSM;
         
-        [Header("Managers")]
+        [Header("Controllers")]
         [SerializeField] private PlayerCamera playerCamera;
         [Space]
         [SerializeField] private _MovementController playerCharacter;
 
         [Header("Managers")]
         [SerializeField] private CharacterDataManager characterDataM;
+        [SerializeField] private UIManager uiM;
+        [Space]
         [SerializeField] private CheckpointManager checkpointM;
+
+        [Header("Events")]
+        [SerializeField] private KillPlayerEventChannelSO e_playerkilled;
 
         private Transform cameraFocalTarget;
         private Transform spectatorCameraTarget;
@@ -49,7 +55,8 @@ namespace LevelDesign.Systems.Player
             }
             if(playerCharacter != null && playerCamera != null)
             {
-                playerCharacter._UpdateBody(Time.deltaTime);
+                playerCharacter._UpdateBody(deltaTime: Time.deltaTime, playerCam: playerCamera.transform);
+                playerCharacter._UpdateInput();
             }
         }
 
@@ -94,9 +101,11 @@ namespace LevelDesign.Systems.Player
                 if(characterDataM.currentMovementController._isInitialized) { return; }
 
                 playerCharacter = characterDataM.currentMovementController;
-                playerCharacter._Initialize(PSM);
 
-                if(checkpointM != null) {
+                if(playerCharacter._isInitialized) { return; }
+                playerCharacter._Initialize(psm: PSM, characterdata: characterDataM.currentCharacterData);
+
+                if(checkpointM != null && checkpointM.SpawnPoint.position != null) {
                     playerCharacter._Teleport(checkpointM.SpawnPoint.position);
                 }
             }
@@ -123,6 +132,12 @@ namespace LevelDesign.Systems.Player
 
         public void ExitCinematic() {
             PSM.isCinematic = false;
+        }
+
+        public void RevivePlayer() {
+            e_playerkilled.RaiseReviveEvent();
+            characterDataM.ClearCharacter();
+            characterDataM.LoadCharacterData(characterDataM.fallbackCharacterData);
         }
         #endregion
     }

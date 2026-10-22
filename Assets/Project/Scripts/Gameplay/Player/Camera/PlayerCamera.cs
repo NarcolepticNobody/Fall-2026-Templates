@@ -21,7 +21,7 @@ namespace LevelDesign.Systems.Player
         [SerializeField] private PlayerStateMachine PSM;
     
         private Vector3 eulerAngles;
-        private float maxLookAngle = 80f;
+        private float maxLookAngle = 60f;
         private CameraInput cameraInput;
 
         public void Initialize(PlayerStateMachine psm = null)
@@ -89,7 +89,7 @@ namespace LevelDesign.Systems.Player
         #endregion
 
         void OnDestroy() {
-            InputAuthManager.Instance.RelinquishRequest(this);
+            if(InputAuthManager.Instance != null) { InputAuthManager.Instance.RelinquishRequest(this); }        
         }
     }
 }
